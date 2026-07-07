@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//f/Monopoly/assets/extracted/**)",
+      "mcp__claude_ai_Figma__get_metadata",
+      "mcp__claude_ai_Figma__download_assets",
+      "Bash(curl -sL -o train.svg \"https://www.figma.com/api/mcp/asset/ab8edf50-e493-4d00-9e20-e7972a0a31fc\")",
+      "Bash(curl -sL -o electric-company-bulb.svg \"https://www.figma.com/api/mcp/asset/958c4338-273f-474d-ad98-892cdd1d1ca7\")",
+      "Bash(curl -sL -o monopoly-logo.svg \"https://www.figma.com/api/mcp/asset/dbc7a49c-ca81-43b7-ae2d-8ce0c4373b0f\")",
+      "PowerShell(foreach\\($f in 'train.svg','electric-company-bulb.svg','monopoly-logo.svg'\\){ $head = \\(Get-Content \"f:\\\\Monopoly\\\\assets\\\\$f\" -TotalCount 1 -Encoding UTF8\\); \"$f => $\\($head.Substring\\(0,[Math]::Min\\(120,$head.Length\\)\\)\\)\" })"
+    ]
+  }
+}
