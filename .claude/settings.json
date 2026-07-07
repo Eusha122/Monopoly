@@ -7,7 +7,15 @@
       "Bash(curl -sL -o train.svg \"https://www.figma.com/api/mcp/asset/ab8edf50-e493-4d00-9e20-e7972a0a31fc\")",
       "Bash(curl -sL -o electric-company-bulb.svg \"https://www.figma.com/api/mcp/asset/958c4338-273f-474d-ad98-892cdd1d1ca7\")",
       "Bash(curl -sL -o monopoly-logo.svg \"https://www.figma.com/api/mcp/asset/dbc7a49c-ca81-43b7-ae2d-8ce0c4373b0f\")",
-      "PowerShell(foreach\\($f in 'train.svg','electric-company-bulb.svg','monopoly-logo.svg'\\){ $head = \\(Get-Content \"f:\\\\Monopoly\\\\assets\\\\$f\" -TotalCount 1 -Encoding UTF8\\); \"$f => $\\($head.Substring\\(0,[Math]::Min\\(120,$head.Length\\)\\)\\)\" })"
+      "PowerShell(foreach\\($f in 'train.svg','electric-company-bulb.svg','monopoly-logo.svg'\\){ $head = \\(Get-Content \"f:\\\\Monopoly\\\\assets\\\\$f\" -TotalCount 1 -Encoding UTF8\\); \"$f => $\\($head.Substring\\(0,[Math]::Min\\(120,$head.Length\\)\\)\\)\" })",
+      "Bash(curl -sL \"https://api.github.com/repos/game-icons/icons/git/trees/master?recursive=1\" -o /tmp/gi-tree.json)",
+      "Bash(mkdir -p /f/Monopoly/assets/tokens)",
+      "Bash(curl -sL -o top-hat.svg __TRACKED_VAR__/lorc/top-hat.svg)",
+      "Bash(curl -sL -o dog.svg __TRACKED_VAR__/delapouite/sitting-dog.svg)",
+      "Bash(curl -sL -o race-car.svg __TRACKED_VAR__/skoll/race-car.svg)",
+      "Bash(curl -sL -o boot.svg __TRACKED_VAR__/lorc/boots.svg)",
+      "PowerShell(node --version)",
+      "PowerShell(npm --version)"
     ]
   }
 }
