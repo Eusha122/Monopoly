@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MONOPOLY</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="icon" href="/assets/monopoly-man.svg">
+</head>
+<body>
+
+  <!-- ═══════════ HOME ═══════════ -->
+  <section id="screen-home" class="screen active">
+    <div class="home-card">
+      <img class="home-mascot" src="/assets/monopoly-man.svg" alt="">
+      <img class="home-logo" src="/assets/monopoly-logo-banner.svg" alt="MONOPOLY">
+      <input id="home-name" maxlength="14" placeholder="Your name" autocomplete="off">
+      <div class="home-actions">
+        <button id="btn-create" class="btn btn-primary">Create Game</button>
+        <div class="join-row">
+          <input id="home-code" maxlength="6" placeholder="CODE" autocomplete="off">
+          <button id="btn-join" class="btn">Join</button>
+        </div>
+      </div>
+      <div id="home-error" class="error-msg"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ LOBBY ═══════════ -->
+  <section id="screen-lobby" class="screen">
+    <div class="lobby-card">
+      <h2>Game Lobby</h2>
+      <div class="room-code-box">
+        <span>ROOM CODE</span>
+        <strong id="lobby-code">------</strong>
+        <button id="btn-copy-link" class="btn btn-small">Copy invite link</button>
+      </div>
+      <div id="lobby-players" class="lobby-players"></div>
+      <div class="lobby-actions">
+        <button id="btn-add-local" class="btn">+ Add player on this device</button>
+        <button id="btn-start" class="btn btn-primary">Start Game</button>
+      </div>
+      <p class="lobby-hint">Friends on other devices: open this address in a browser and join with the code.</p>
+      <div id="lobby-error" class="error-msg"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ GAME ═══════════ -->
+  <section id="screen-game" class="screen">
+    <div class="game-layout">
+      <div class="board-wrap">
+        <div id="board" class="board"></div>
+      </div>
+      <aside class="sidebar">
+        <div id="players-panel" class="players-panel"></div>
+        <div id="action-bar" class="action-bar"></div>
+        <div id="log" class="log"></div>
+        <form id="chat-form" class="chat-form" autocomplete="off">
+          <input id="chat-input" maxlength="200" placeholder="Say something…">
+          <button class="btn btn-small" type="submit">Send</button>
+        </form>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ═══════════ MODALS ═══════════ -->
+  <div id="modal-root"></div>
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>

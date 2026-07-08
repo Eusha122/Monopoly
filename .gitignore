@@ -1,0 +1,11 @@
+# dependencies
+node_modules/
+
+# test artifacts (screenshots regenerate via node test/visual.js)
+test/shots/
+
+# local backups & junk
+*.bak
+*.log
+Thumbs.db
+.DS_Store

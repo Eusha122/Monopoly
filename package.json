@@ -1,0 +1,25 @@
+{
+  "name": "monopoly",
+  "version": "1.0.0",
+  "description": "Web-playable multiplayer Monopoly with room codes",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "node test/rules.js && node test/smoke.js",
+    "gen-tiles": "node tools/gen-tiles.mjs"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^25.3.0",
+    "socket.io-client": "^4.7.5"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}
