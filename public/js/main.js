@@ -202,10 +202,18 @@ $('#btn-start').onclick = () => send('start_game', { playerId: myIds[0] });
 // ---------- exit game ----------
 $('#btn-exit-game').onclick = () => {
   confirmModal('Leave this game? If the game has started, your properties are forfeited to the bank and this cannot be undone.', async () => {
-    for (const id of myIds) await send('leave_game', { playerId: id });
-    sessionStorage.removeItem('myIds');
-    sessionStorage.removeItem('roomCode');
-    location.href = '/';
+    try {
+      // don't let a dropped connection or a slow ack strand the player on this screen —
+      // give the server 2s to hear we're leaving, then go home regardless.
+      await Promise.race([
+        Promise.all(myIds.map(id => send('leave_game', { playerId: id }))),
+        new Promise(resolve => setTimeout(resolve, 2000)),
+      ]);
+    } finally {
+      sessionStorage.removeItem('myIds');
+      sessionStorage.removeItem('roomCode');
+      location.href = '/';
+    }
   });
 };
 
