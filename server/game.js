@@ -428,6 +428,42 @@ export class Game {
     }
   }
 
+  // A player quitting on purpose (not a network drop). Lobby: just remove them.
+  // Mid-game: forfeit like bankruptcy — properties return to the bank (no refund,
+  // since this is voluntary, not a forced sale), then the game continues without them.
+  leaveGame(playerId) {
+    const p = this.player(playerId);
+    if (!p) return;
+
+    if (this.phase === 'lobby') {
+      this.players = this.players.filter(x => x.id !== playerId);
+      this.say(`${p.name} left the game.`);
+      return;
+    }
+    if (p.bankrupt) return; // already out, nothing to do
+
+    const wasCurrent = this.current()?.id === p.id;
+    this.say(`🚪 ${p.name} left the game — their properties return to the bank.`);
+
+    for (const [tileId, own] of Object.entries(this.owner)) {
+      if (own.playerId === p.id) delete this.owner[tileId];
+    }
+    for (const deck of p.jailCards) (deck === 'chance' ? this.chance : this.chest).push({ text: 'Get Out of Jail Free.', action: 'jail-card' });
+    p.jailCards = [];
+    p.money = 0;
+    p.bankrupt = true;
+    this.trades = this.trades.filter(t => t.fromId !== p.id && t.toId !== p.id);
+    if (this.debt?.playerId === p.id) this.debt = null;
+
+    if (this.auction?.active?.includes(p.id)) {
+      if (this.auction.highBidderId === p.id) { this.auction.highBid = 0; this.auction.highBidderId = null; }
+      this.auction.active = this.auction.active.filter(id => id !== p.id);
+      this.maybeEndAuction();
+    }
+
+    if (!this.checkGameOver() && wasCurrent) { this.pendingTile = null; this.nextTurn(); }
+  }
+
   checkGameOver() {
     const alive = this.alive();
     if (alive.length === 1 && this.phase === 'playing') {

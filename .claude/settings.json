@@ -48,7 +48,28 @@
       "Bash(grep -v '\\\\${')",
       "Bash(grep -noE \"['\\\\`\\\\\"]\\\\\\\\\\\\$['\\\\`]|\\\\\\\\\\\\$\\\\\\\\\\\\$\\\\{\" public/js/board.js public/js/main.js server/game.js)",
       "Bash(sed -i 's/\\\\$\\\\${/£${/g' public/js/main.js public/js/board.js server/game.js)",
-      "Bash(grep -rn '\\\\$\\\\${' public/js server)"
+      "Bash(grep -rn '\\\\$\\\\${' public/js server)",
+      "Bash(ls -la \"/c/Users/user/Downloads/LightsailDefaultKey-ap-south-1.pem\" 2>&1)",
+      "Read(//c/Users/user/Downloads/**)",
+      "Bash(chmod 400 \"/c/Users/user/Downloads/LightsailDefaultKey-ap-south-1.pem\")",
+      "Bash(ssh -i \"/c/Users/user/Downloads/LightsailDefaultKey-ap-south-1.pem\" -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 ubuntu@13.232.202.161 \"echo CONNECTED && whoami && lsb_release -a 2>/dev/null && node -v 2>&1; nginx -v 2>&1\")",
+      "Bash(ssh -i /c/Users/user/Downloads/LightsailDefaultKey-ap-south-1.pem -o BatchMode=yes -o ConnectTimeout=10 ubuntu@13.232.202.161 ' *)",
+      "Bash(ssh -i *)",
+      "Bash(nslookup monopoly.safeshare.co)",
+      "Bash(curl -s -o /dev/null -w \"http://13.232.202.161 direct: %{http_code}\\\\n\" http://13.232.202.161/)",
+      "Bash(curl -s -o /dev/null -w \"http://monopoly.safeshare.co via domain: %{http_code}\\\\n\" -H \"Host: monopoly.safeshare.co\" http://13.232.202.161/)",
+      "Bash(curl -s -o /dev/null -w \"http://monopoly.safeshare.co: %{http_code}\\\\n\" http://monopoly.safeshare.co/)",
+      "Bash(curl -s -o /dev/null -w \"https://monopoly.safeshare.co: %{http_code}\\\\n\" https://monopoly.safeshare.co/)",
+      "Bash(curl -s -o /dev/null -w \"http \\(should redirect\\): %{http_code} -> %{redirect_url}\\\\n\" http://monopoly.safeshare.co/)",
+      "Bash(scp -i /c/Users/user/Downloads/LightsailDefaultKey-ap-south-1.pem -o ConnectTimeout=10 f:/Monopoly/public/js/main.js ubuntu@13.232.202.161:/var/www/monopoly/public/js/main.js)",
+      "Bash(ssh -i /c/Users/user/Downloads/LightsailDefaultKey-ap-south-1.pem -o BatchMode=yes ubuntu@13.232.202.161 'node --check /var/www/monopoly/public/js/main.js && echo '\\\\''syntax ok, no restart needed \\(static file\\)'\\\\''')",
+      "Bash(scp -i /c/Users/user/Downloads/LightsailDefaultKey-ap-south-1.pem -o ConnectTimeout=10 f:/Monopoly/public/css/styles.css ubuntu@13.232.202.161:/var/www/monopoly/public/css/styles.css)",
+      "Bash(node --check server/game.js)",
+      "Bash(node --check server/index.js)",
+      "Bash(scp -i /c/Users/user/Downloads/LightsailDefaultKey-ap-south-1.pem -o ConnectTimeout=10 f:/Monopoly/public/index.html ubuntu@13.232.202.161:/var/www/monopoly/public/index.html)",
+      "Bash(scp -i /c/Users/user/Downloads/LightsailDefaultKey-ap-south-1.pem -o ConnectTimeout=10 f:/Monopoly/server/game.js ubuntu@13.232.202.161:/var/www/monopoly/server/game.js)",
+      "Bash(scp -i /c/Users/user/Downloads/LightsailDefaultKey-ap-south-1.pem -o ConnectTimeout=10 f:/Monopoly/server/index.js ubuntu@13.232.202.161:/var/www/monopoly/server/index.js)",
+      "Bash(ssh -i /c/Users/user/Downloads/LightsailDefaultKey-ap-south-1.pem -o BatchMode=yes ubuntu@13.232.202.161 'grep -n '\\\\''btn-exit-game\\\\|leave_game'\\\\'' -A 8 /var/www/monopoly/public/js/main.js')"
     ]
   }
 }

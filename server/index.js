@@ -183,6 +183,11 @@ io.on('connection', (socket) => {
   socket.on('unmortgage', act((p) => game()?.unmortgage(me(p), p.tileId)));
   socket.on('settle_debt', act((p) => game()?.settleDebt(me(p))));
   socket.on('bankrupt', act((p) => game()?.declareBankruptcy(me(p))));
+  socket.on('leave_game', act((p) => {
+    const id = me(p);
+    game()?.leaveGame(id);
+    socket.data.controls.delete(id);
+  }));
   socket.on('propose_trade', act((p) => game()?.proposeTrade(me(p), p)));
   socket.on('respond_trade', act((p) => game()?.respondTrade(me(p), p.tradeId, p.accept)));
 

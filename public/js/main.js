@@ -113,8 +113,11 @@ socket.on('connect', () => {
 // ---------- lobby ----------
 // If the host is browsing on localhost, an invite link must use the PC's LAN address
 // instead — "localhost" on a friend's device points at their device, not this PC.
+// On a real domain (public deploy), location.origin is already correct and reachable
+// from anywhere, not just the local network.
+const isLocal = ['localhost', '127.0.0.1'].includes(location.hostname);
 let shareOrigin = location.origin;
-if (['localhost', '127.0.0.1'].includes(location.hostname)) {
+if (isLocal) {
   fetch('/api/lan').then(r => r.json()).then(({ url }) => { if (url) shareOrigin = url; }).catch(() => {});
 }
 async function copyText(text) {
@@ -139,7 +142,7 @@ async function copyText(text) {
 $('#btn-copy-link').onclick = async () => {
   const link = `${shareOrigin}/?join=${roomCode}`;
   if (await copyText(link)) {
-    toast('Invite link copied! Works for anyone on your Wi-Fi.', false);
+    toast(isLocal ? 'Invite link copied! Works for anyone on your Wi-Fi.' : 'Invite link copied! Works for anyone, anywhere.', false);
   } else {
     // copying blocked entirely — show the link so it can be copied by hand
     modal(`<h3>Invite link</h3>
@@ -195,6 +198,16 @@ function addLocalPlayerDialog() {
   });
 }
 $('#btn-start').onclick = () => send('start_game', { playerId: myIds[0] });
+
+// ---------- exit game ----------
+$('#btn-exit-game').onclick = () => {
+  confirmModal('Leave this game? If the game has started, your properties are forfeited to the bank and this cannot be undone.', async () => {
+    for (const id of myIds) await send('leave_game', { playerId: id });
+    sessionStorage.removeItem('myIds');
+    sessionStorage.removeItem('roomCode');
+    location.href = '/';
+  });
+};
 
 function renderLobby() {
   $('#lobby-code').textContent = roomCode;
@@ -316,7 +329,7 @@ function tokenEl(playerId) {
     el.dataset.face = face;
     el.classList.toggle('photo', !!p.avatar);
     el.innerHTML = p.avatar
-      ? `<img src="${p.avatar}" alt="${esc(p.name)}">`
+      ? `<img class="photo" src="${p.avatar}" alt="${esc(p.name)}">`
       : `<img src="${TOKENS.find(t => t.id === p.token).img}" alt="${esc(p.name)}">`;
   }
   return el;

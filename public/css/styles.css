@@ -400,12 +400,13 @@ body::before {
 /* tokens */
 .token-layer { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
 .token {
-  position: absolute; width: 3.4%; aspect-ratio: 1;
+  position: absolute; width: 5.2%; aspect-ratio: 1;
   transform: translate(-50%, -50%);
   transition: left .18s ease-in-out, top .18s ease-in-out;
   filter: drop-shadow(0 4px 6px rgba(0,0,0,.5));
 }
 .token img { width: 100%; height: 100%; object-fit: contain; filter: invert(1) drop-shadow(0 0 2px #000); position: relative; z-index: 1; }
+.token.photo::after { content: none; } /* photo tokens: just the round photo, no colored disc/border */
 .token::after {
   content: ''; position: absolute; inset: -22%;
   border-radius: 50%;
@@ -417,6 +418,9 @@ body::before {
 @keyframes hop { from { transform: translateY(0); } to { transform: translateY(-22%); } }
 
 /* ══════════════ SIDEBAR ══════════════ */
+.exit-btn { align-self: flex-end; opacity: .7; }
+.exit-btn:hover { opacity: 1; }
+
 .players-panel { display: flex; flex-direction: column; gap: 9px; }
 .pp {
   display: flex; gap: 12px; align-items: center;
@@ -484,9 +488,9 @@ img.photo {
   border-radius: 50%;
   object-fit: cover;
 }
-.token.photo img { border: 2px solid #fff; box-sizing: border-box; }
-.pp-token.photo { padding: 0; border: 2px solid var(--pc); }
-.go-token.photo { padding: 0; background: none; }
+.token.photo img { border: none; }
+.pp-token.photo { padding: 0; border: none; }
+.go-token.photo { padding: 0; border: none; background: none; }
 
 /* chat input under the log */
 .chat-form { display: flex; gap: 8px; }
@@ -593,11 +597,52 @@ img.photo {
 }
 .toast.error { background: rgba(92, 26, 26, .95); }
 
-/* responsive: stack on small screens */
+/* responsive: stack on small/touch screens */
 @media (max-width: 900px) {
-  body { overflow: auto; }
-  .game-layout { flex-direction: column; height: auto; }
-  .board-wrap { width: 96vw; height: 96vw; padding: 8px; }
+  body { overflow-y: auto; overflow-x: hidden; }
+  /* .screen was height:100vh + align-items:center — fine for the short home/lobby cards,
+     but once the stacked board+sidebar is taller than the phone screen, centering pushes
+     the top half ABOVE the page where scrolling can never reach it. Game screen only:
+     let content flow from the top instead so all of it is reachable by scrolling down. */
+  #screen-game { height: auto; min-height: 100vh; }
+  #screen-game.active { align-items: flex-start; }
+  .game-layout { flex-direction: column; height: auto; padding: 10px; perspective: none; }
+  .board-wrap { width: 96vw; height: 96vw; padding: 8px; transform: none; } /* flat: no hold-key to un-tilt on touch */
+  .board-wrap::before { display: none; }
   .sidebar { width: 96vw; height: auto; }
-  .log { max-height: 30vh; }
+  .log { max-height: 26vh; }
+
+  /* comfortable tap targets everywhere */
+  .btn { padding: 14px 20px; min-height: 46px; }
+  .btn-small { min-height: 34px; padding: 8px 12px; }
+  .lobby-token, .token-choice img { min-width: 32px; }
+
+  /* iOS Safari auto-zooms any focused input under 16px — keep every input at/above that */
+  input, select, textarea { font-size: max(16px, 1em); }
+  .chat-form input { font-size: 16px; }
+  .join-row input { font-size: 16px; letter-spacing: 4px; }
+
+  .home-card, .lobby-card { padding: 30px 22px; width: 94vw; }
+  .modal { padding: 22px 18px; width: 94vw; }
+  .tr-cols { grid-template-columns: 1fr; }
+
+  /* respect notches/home-indicators on phones */
+  body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+  .toast { bottom: calc(20px + env(safe-area-inset-bottom)); }
+}
+
+@media (max-width: 420px) {
+  .home-card, .lobby-card { padding: 24px 16px; }
+  .room-code-box { flex-wrap: wrap; gap: 10px; }
+  .room-code-box strong { font-size: 26px; letter-spacing: 6px; }
+  .lobby-actions { flex-direction: column; }
+  .pp { padding: 9px 11px; gap: 9px; }
+  .pp-money { font-size: 18px; }
+  .action-bar { padding: 11px; }
+}
+
+/* touch devices generally have no hover — make sure tap feedback still reads as a press */
+@media (hover: none) {
+  .btn:active:not(:disabled) { filter: brightness(1.15); }
+  .tile:hover { filter: none; box-shadow: none; } /* avoid a "stuck hover" ring after tapping a tile */
 }
