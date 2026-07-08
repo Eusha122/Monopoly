@@ -59,8 +59,31 @@ body::before {
   box-shadow: 0 40px 100px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.08);
   backdrop-filter: blur(14px);
 }
-.home-mascot { height: 92px; margin-bottom: 4px; filter: drop-shadow(0 8px 16px rgba(0,0,0,.45)); }
-.home-logo { width: 100%; max-width: 330px; margin-bottom: 30px; filter: drop-shadow(0 8px 18px rgba(0,0,0,.5)); }
+.home-logo { width: 100%; max-width: 330px; margin: 6px 0 22px; filter: drop-shadow(0 8px 18px rgba(0,0,0,.5)); }
+
+/* mandatory photo picker on the home screen */
+.photo-picker {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  background: none; border: none; cursor: pointer; padding: 0; margin: 0 auto 18px;
+  font-family: var(--ui); color: #cfe0d3;
+}
+.photo-picker img {
+  width: 108px; height: 108px; border-radius: 50%;
+  object-fit: cover;
+  border: 3px dashed rgba(217,182,76,.55);
+  background: rgba(0,0,0,.28);
+  padding: 6px;
+  transition: border-color .15s, transform .15s, filter .15s;
+}
+.photo-picker:hover img { border-color: var(--gold); transform: scale(1.04); }
+.photo-picker.has-photo img { border: 3px solid var(--gold); padding: 0; filter: none; }
+.photo-picker-badge {
+  font-size: 12.5px; letter-spacing: .3px;
+  padding: 5px 12px; border-radius: 20px;
+  background: rgba(217,182,76,.14); border: 1px solid rgba(217,182,76,.35);
+  color: #f2d98a;
+}
+.photo-picker.has-photo .photo-picker-badge { background: rgba(74,222,128,.12); border-color: rgba(74,222,128,.4); color: #a8f0c0; }
 .home-card input {
   width: 100%;
   padding: 14px 16px;
@@ -454,6 +477,16 @@ body::before {
 .log::-webkit-scrollbar { width: 6px; }
 .log::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 3px; }
 .log .chat-line { color: #ffe9a8; }
+
+/* uploaded photo avatars: round crop, never color-inverted like the token art */
+img.photo {
+  filter: none !important;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.token.photo img { border: 2px solid #fff; box-sizing: border-box; }
+.pp-token.photo { padding: 0; border: 2px solid var(--pc); }
+.go-token.photo { padding: 0; background: none; }
 
 /* chat input under the log */
 .chat-form { display: flex; gap: 8px; }

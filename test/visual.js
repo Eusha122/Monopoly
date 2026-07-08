@@ -23,15 +23,37 @@ page.on('pageerror', (e) => console.log('PAGE EXCEPTION:', e.message));
 await page.goto(URL, { waitUntil: 'networkidle0' });
 await page.screenshot({ path: `${shots}/1-home.png` });
 
-// create room
+// a 1x1 PNG, used to satisfy the mandatory photo picker
+const TEST_PNG_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+async function pickFakePhoto(page, fileInputSelector) {
+  await page.evaluate(async (sel, b64) => {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const file = new File([bytes], 'test.png', { type: 'image/png' });
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    const input = document.querySelector(sel);
+    input.files = dt.files;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  }, fileInputSelector, TEST_PNG_B64);
+  await sleep(300); // squareJpeg() crops/encodes async
+}
+
+// create room (name + mandatory photo)
 await page.type('#home-name', 'Alice');
+await pickFakePhoto(page, '#home-photo-file');
 await page.click('#btn-create');
 await page.waitForSelector('#screen-lobby.active', { timeout: 5000 });
 await sleep(400);
 
-// add a second local player via dialog override
-page.on('dialog', async (d) => d.accept('Bob'));
+// add a second local player via the "add player" modal (name + mandatory photo)
 await page.click('#btn-add-local');
+await sleep(200);
+await page.type('#al-name', 'Bob');
+await pickFakePhoto(page, '#al-photo-file');
+await sleep(200);
+await page.click('#al-ok');
 await sleep(400);
 await page.screenshot({ path: `${shots}/2-lobby.png` });
 

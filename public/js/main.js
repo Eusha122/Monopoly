@@ -47,6 +47,42 @@ function show(screen) {
 }
 
 // ---------- home ----------
+// A photo is mandatory before anyone can create or join a room. Whatever is
+// picked is held in memory and uploaded right after the server confirms the
+// player exists (we need a playerId first — the upload URL is per-player).
+let pendingAvatarBlob = null;
+
+function refreshHomeButtons() {
+  const ready = $('#home-name').value.trim().length > 0 && !!pendingAvatarBlob;
+  $('#btn-create').disabled = !ready;
+  $('#btn-join').disabled = !ready;
+}
+$('#home-name').addEventListener('input', refreshHomeButtons);
+
+$('#home-photo-picker').onclick = () => $('#home-photo-file').click();
+$('#home-photo-file').onchange = async () => {
+  const file = $('#home-photo-file').files[0];
+  if (!file) return;
+  try {
+    pendingAvatarBlob = await squareJpeg(file, 256);
+    $('#home-photo-preview').src = URL.createObjectURL(pendingAvatarBlob);
+    $('#home-photo-picker').classList.add('has-photo');
+    $('#home-photo-picker').querySelector('.photo-picker-badge').textContent = '✓ Photo set';
+    refreshHomeButtons();
+  } catch (e) { toast('Could not read that image: ' + e.message); }
+};
+
+async function uploadPendingAvatar(code, playerId) {
+  if (!pendingAvatarBlob) return;
+  const blob = pendingAvatarBlob;
+  pendingAvatarBlob = null;
+  try {
+    await fetch(`/api/avatar/${code}/${playerId}`, {
+      method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, body: blob,
+    });
+  } catch { /* not fatal — player can set it later from the lobby */ }
+}
+
 $('#btn-create').onclick = () => {
   send('create_room', { name: $('#home-name').value });
 };
@@ -64,6 +100,7 @@ socket.on('joined', ({ code, playerId }) => {
   if (!myIds.includes(playerId)) myIds.push(playerId);
   if (!activeLocalId) activeLocalId = playerId;
   saveSession();
+  uploadPendingAvatar(code, playerId);
 });
 
 socket.on('connect', () => {
@@ -116,10 +153,47 @@ $('#btn-copy-link').onclick = async () => {
       });
   }
 };
-$('#btn-add-local').onclick = () => {
-  const name = prompt('Name for the player on this device:');
-  if (name?.trim()) send('add_local_player', { name });
-};
+$('#btn-add-local').onclick = () => addLocalPlayerDialog();
+
+function addLocalPlayerDialog() {
+  modal(`
+    <h3>Add a player on this device</h3>
+    <button id="al-photo-picker" class="photo-picker" type="button" style="margin:4px auto 16px">
+      <img id="al-photo-preview" src="/assets/monopoly-man.svg" alt="">
+      <span class="photo-picker-badge">📷 Add their photo</span>
+    </button>
+    <input type="file" id="al-photo-file" accept="image/*" hidden>
+    <input id="al-name" maxlength="14" placeholder="Their name" autocomplete="off"
+      style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.3);color:#fff;text-align:center;margin-bottom:14px">
+    <div class="modal-btns">
+      <button class="btn" id="al-cancel">Cancel</button>
+      <button class="btn btn-primary" id="al-ok" disabled>Add player</button>
+    </div>`, (root, close) => {
+    let blob = null;
+    const nameInp = root.querySelector('#al-name');
+    const okBtn = root.querySelector('#al-ok');
+    const refresh = () => { okBtn.disabled = !(nameInp.value.trim() && blob); };
+    nameInp.addEventListener('input', refresh);
+    root.querySelector('#al-photo-picker').onclick = () => root.querySelector('#al-photo-file').click();
+    root.querySelector('#al-photo-file').onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        blob = await squareJpeg(file, 256);
+        root.querySelector('#al-photo-preview').src = URL.createObjectURL(blob);
+        root.querySelector('#al-photo-picker').classList.add('has-photo');
+        root.querySelector('#al-photo-picker .photo-picker-badge').textContent = '✓ Photo set';
+        refresh();
+      } catch (err) { toast('Could not read that image: ' + err.message); }
+    };
+    root.querySelector('#al-cancel').onclick = close;
+    okBtn.onclick = async () => {
+      pendingAvatarBlob = blob; // picked up by the 'joined' handler once the server confirms the new player
+      await send('add_local_player', { name: nameInp.value.trim() });
+      close();
+    };
+  });
+}
 $('#btn-start').onclick = () => send('start_game', { playerId: myIds[0] });
 
 function renderLobby() {
@@ -129,7 +203,7 @@ function renderLobby() {
     const tok = TOKENS.find(t => t.id === p.token);
     const pickable = isMine(p.id);
     return `<div class="lobby-player" style="--pc:${p.color}">
-      <img src="${tok.img}" class="lobby-token ${pickable ? 'pickable' : ''}" data-player="${p.id}" title="${pickable ? 'Click to change token' : tok.name}">
+      <img src="${p.avatar || tok.img}" class="lobby-token ${p.avatar ? 'photo' : ''} ${pickable ? 'pickable' : ''}" data-player="${p.id}" title="${pickable ? 'Click to change token or photo' : tok.name}">
       <span class="lobby-name">${esc(p.name)}${pickable ? ' (you)' : ''}</span>
       <span class="dot ${p.connected ? 'on' : 'off'}"></span>
     </div>`;
@@ -141,17 +215,66 @@ function renderLobby() {
 
 function pickTokenDialog(playerId) {
   const taken = new Set(state.players.filter(p => p.id !== playerId).map(p => p.token));
+  const hasPhoto = !!player(playerId)?.avatar;
   modal(`
     <h3>Choose your token</h3>
     <div class="token-grid">
       ${TOKENS.map(t => `<button class="token-choice" data-token="${t.id}" ${taken.has(t.id) ? 'disabled' : ''}>
         <img src="${t.img}"><span>${t.name}</span></button>`).join('')}
-    </div>`, (root, close) => {
+    </div>
+    <div class="modal-btns">
+      <button class="btn" id="btn-photo">📷 Use my photo</button>
+      ${hasPhoto ? '<button class="btn" id="btn-photo-off">Remove photo</button>' : ''}
+    </div>
+    <input type="file" id="photo-file" accept="image/*" hidden>`, (root, close) => {
     root.querySelectorAll('.token-choice').forEach(b => b.onclick = async () => {
       await send('pick_token', { playerId, token: b.dataset.token });
       close();
     });
+    const file = root.querySelector('#photo-file');
+    root.querySelector('#btn-photo').onclick = () => file.click();
+    root.querySelector('#btn-photo-off')?.addEventListener('click', async () => {
+      await send('clear_avatar', { playerId });
+      close();
+    });
+    file.onchange = async () => {
+      if (!file.files[0]) return;
+      try {
+        const blob = await squareJpeg(file.files[0], 256);
+        const r = await fetch(`/api/avatar/${roomCode}/${playerId}`, {
+          method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, body: blob,
+        });
+        if (!r.ok) throw new Error((await r.json()).error || r.statusText);
+        toast('Photo set!', false);
+        close();
+      } catch (e) { toast('Upload failed: ' + e.message); }
+    };
   });
+}
+
+// downscale + center-crop any image to a small square JPEG before uploading
+function squareJpeg(file, size) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = c.height = size;
+      const s = Math.min(img.width, img.height);
+      c.getContext('2d').drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, size, size);
+      URL.revokeObjectURL(img.src);
+      c.toBlob(b => b ? resolve(b) : reject(new Error('could not read image')), 'image/jpeg', 0.85);
+    };
+    img.onerror = () => reject(new Error('not a readable image'));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+// avatar photo if uploaded, otherwise the token piece
+function tokenFace(p, cls) {
+  const tok = TOKENS.find(t => t.id === p.token);
+  return p.avatar
+    ? `<img class="${cls} photo" src="${p.avatar}" alt="${esc(p.name)}">`
+    : `<img class="${cls}" src="${tok.img}" alt="${tok.name}">`;
 }
 
 // ---------- state sync ----------
@@ -180,14 +303,21 @@ function buildBoard() {
 function tokenEl(playerId) {
   let el = document.querySelector(`.token[data-player="${playerId}"]`);
   if (!el) {
-    const p = player(playerId);
-    const tok = TOKENS.find(t => t.id === p.token);
     el = document.createElement('div');
     el.className = 'token';
     el.dataset.player = playerId;
-    el.style.setProperty('--pc', p.color);
-    el.innerHTML = `<img src="${tok.img}" alt="${p.name}">`;
+    el.style.setProperty('--pc', player(playerId).color);
     $('#token-layer').appendChild(el);
+  }
+  // (re)draw the face if the token or an uploaded photo changed
+  const p = player(playerId);
+  const face = p.avatar || p.token;
+  if (el.dataset.face !== face) {
+    el.dataset.face = face;
+    el.classList.toggle('photo', !!p.avatar);
+    el.innerHTML = p.avatar
+      ? `<img src="${p.avatar}" alt="${esc(p.name)}">`
+      : `<img src="${TOKENS.find(t => t.id === p.token).img}" alt="${esc(p.name)}">`;
   }
   return el;
 }
@@ -334,7 +464,7 @@ function renderPlayersPanel() {
     const props = Object.entries(state.owner).filter(([, o]) => o.playerId === p.id);
     const isTurn = state.turn === p.id;
     return `<div class="pp ${isTurn ? 'pp-turn' : ''} ${p.bankrupt ? 'pp-dead' : ''}" style="--pc:${p.color}">
-      <img class="pp-token" src="${tok.img}">
+      ${tokenFace(p, 'pp-token')}
       <div class="pp-info">
         <div class="pp-name">${esc(p.name)} ${p.inJail ? '🔒' : ''} ${p.jailCards ? '🎟'.repeat(p.jailCards) : ''} ${!p.connected ? '⚠' : ''}</div>
         <div class="pp-money" data-player="${p.id}">${money(p.money)}</div>
@@ -608,7 +738,7 @@ function maybeShowGameOver() {
   const tok = TOKENS.find(t => t.id === w.token);
   modal(`
     <div class="gameover">
-      <img src="${tok.img}" class="go-token" style="--pc:${w.color}">
+      <img src="${w.avatar || tok.img}" class="go-token ${w.avatar ? 'photo' : ''}" style="--pc:${w.color}">
       <h2>🏆 ${esc(w.name)} wins!</h2>
       <p>Total worth: ${money(w.money)}</p>
       <button class="btn btn-primary" onclick="location.href='/'">New game</button>

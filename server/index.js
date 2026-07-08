@@ -15,6 +15,26 @@ app.use(express.static(path.join(root, 'public')));
 app.use('/assets', express.static(path.join(root, 'assets')));
 app.use('/shared', express.static(path.join(root, 'shared')));
 
+// ---------- player photo avatars (kept in memory, like the rooms) ----------
+const avatars = new Map(); // playerId -> { buf, type }
+
+app.post('/api/avatar/:code/:playerId', express.raw({ type: ['image/jpeg', 'image/png', 'image/webp'], limit: '3mb' }), (req, res) => {
+  const g = games.get(String(req.params.code || '').toUpperCase());
+  const p = g?.player(req.params.playerId);
+  if (!g || !p) return res.status(404).json({ error: 'player not found' });
+  if (!Buffer.isBuffer(req.body) || req.body.length < 100) return res.status(400).json({ error: 'no image' });
+  avatars.set(p.id, { buf: req.body, type: req.get('content-type') });
+  p.avatar = `/api/avatar/${p.id}?v=${Date.now()}`; // v busts browser cache on re-upload
+  res.json({ ok: true });
+  broadcastGame(g);
+});
+
+app.get('/api/avatar/:playerId', (req, res) => {
+  const a = avatars.get(req.params.playerId);
+  if (!a) return res.status(404).end();
+  res.set('Content-Type', a.type).set('Cache-Control', 'public, max-age=31536000, immutable').send(a.buf);
+});
+
 // which sound files actually exist, so the client doesn't probe and 404
 app.get('/api/sounds', (req, res) => {
   let files = [];
@@ -37,6 +57,14 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 const games = new Map(); // code -> Game
+
+// push fresh state to everyone in a room (used by HTTP routes; sockets have their own)
+function broadcastGame(g) {
+  const state = g.stateFor();
+  const events = g.events;
+  g.events = [];
+  io.to(g.code).emit('state', { state, events });
+}
 
 function newCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no easily-confused chars
@@ -157,6 +185,12 @@ io.on('connection', (socket) => {
   socket.on('bankrupt', act((p) => game()?.declareBankruptcy(me(p))));
   socket.on('propose_trade', act((p) => game()?.proposeTrade(me(p), p)));
   socket.on('respond_trade', act((p) => game()?.respondTrade(me(p), p.tradeId, p.accept)));
+
+  socket.on('clear_avatar', act((p) => {
+    const g = game();
+    const pl = g?.player(me(p));
+    if (pl) { pl.avatar = null; avatars.delete(pl.id); }
+  }));
 
   socket.on('chat', act((p) => {
     const g = game();

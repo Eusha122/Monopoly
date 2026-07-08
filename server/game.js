@@ -635,7 +635,7 @@ export class Game {
       code: this.code,
       phase: this.phase,
       players: this.players.map(p => ({
-        id: p.id, name: p.name, token: p.token, color: p.color,
+        id: p.id, name: p.name, token: p.token, color: p.color, avatar: p.avatar || null,
         money: p.money, pos: p.pos, inJail: p.inJail, jailTurns: p.jailTurns,
         jailCards: p.jailCards.length, bankrupt: p.bankrupt, connected: p.connected,
       })),
